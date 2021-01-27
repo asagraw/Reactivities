@@ -1,26 +1,26 @@
-import React from 'react';
+import { observer } from 'mobx-react-lite';
+import React, { useContext } from 'react';
+import { NavLink } from 'react-router-dom';
 import { Button, Container, Menu } from 'semantic-ui-react';
-import { IActivity } from '../../app/models/activity';
+import ActivityStore from '../../app/stores/activityStore';
 
-interface IProps {
-    setSelectedActivity: (selectedActivity: IActivity | null) => void;
-    setEditMode: (editMode: boolean) => void;
-}
 
-export const NavBar: React.FC<IProps> = ({ setSelectedActivity, setEditMode }) => {
+const NavBar = () => {
+    const activityStore = useContext(ActivityStore);
+    const { setEditMode, setSelectedActivity } = activityStore;
     return (
         <div>
             <Menu fixed='top' inverted>
                 <Container>
-                    <Menu.Item header>
+                    <Menu.Item header as={NavLink} exact to="/">
                         <img src="/asset/logo.png" alt="logo" style={{ marginRight: "10px" }} />
                         Reactivities
                     </Menu.Item>
-                    <Menu.Item name='Activities' />
+                    <Menu.Item name='Activities' as={NavLink} to="/activities" />
                     <Menu.Item>
-                        <Button positive content="Create Activity" onClick={
+                        <Button positive content="Create Activity" as={NavLink} to="/createActivity" onClick={
                             () => {
-                                setSelectedActivity(null);
+                                setSelectedActivity(undefined);
                                 setEditMode(true);
                             }
                         } />
@@ -29,4 +29,6 @@ export const NavBar: React.FC<IProps> = ({ setSelectedActivity, setEditMode }) =
             </Menu>
         </div>
     )
-}
+};
+
+export default observer(NavBar);

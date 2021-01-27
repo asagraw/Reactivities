@@ -1,20 +1,22 @@
-import React, { SyntheticEvent } from 'react'
-import { Item, Image, Button, Label, Segment } from 'semantic-ui-react'
-import { IActivity } from '../../../app/models/activity'
+import { observer } from 'mobx-react-lite'
+import React, { useContext } from 'react'
+import { Link } from 'react-router-dom'
+import { Item, Button, Label, Segment } from 'semantic-ui-react'
+import ActivityStore from '../../../app/stores/activityStore'
 
-interface IProps {
-    activities: IActivity[];
-    selectActivity: (id: string) => void;
-    setEditMode: (editMode: boolean) => void;
-    deleteActivity: (event: SyntheticEvent<HTMLButtonElement>, id: string) => void;
-    submitting: boolean;
-    targetDel: string;
-}
-export const ActivityList: React.FC<IProps> = ({ activities, selectActivity, setEditMode, deleteActivity, submitting, targetDel }) => {
+// interface IProps {
+//     setEditMode: (editMode: boolean) => void;
+//     deleteActivity: (event: SyntheticEvent<HTMLButtonElement>, id: string) => void;
+//     submitting: boolean;
+//     targetDel: string;
+// }
+const ActivityList = () => {
+    const activityStore = useContext(ActivityStore);
+    const { activitiesByDate, submitting, deleteActivity, target } = activityStore;
     return (
         <Segment>
             <Item.Group divided>
-                {activities.map(activity => (
+                {activitiesByDate.map(activity => (
                     <Item key={activity.id}>
                         <Item.Content>
                             <Item.Header as='a'>{activity.title}</Item.Header>
@@ -24,14 +26,11 @@ export const ActivityList: React.FC<IProps> = ({ activities, selectActivity, set
                                 <div>{activity.city}, {activity.venue}</div>
                             </Item.Description>
                             <Item.Extra>
-                                <Button floated='right' content='View' color='blue' onClick={() => {
-                                    selectActivity(activity.id)
-                                    setEditMode(false);
-                                }
-                                } />
+                                <Button floated='right' content='View' color='blue' as={Link} to={`/activities/${activity.id}`}
+                                />
                                 <Button floated='right' content='Delete' negative name={activity.id} onClick={(event) => {
                                     deleteActivity(event, activity.id);
-                                }} loading={targetDel === activity.id && submitting} />
+                                }} loading={target === activity.id && submitting} />
                                 <Label basic content={activity.category} />
                             </Item.Extra>
                         </Item.Content>
@@ -42,3 +41,5 @@ export const ActivityList: React.FC<IProps> = ({ activities, selectActivity, set
 
     )
 }
+
+export default observer(ActivityList);
