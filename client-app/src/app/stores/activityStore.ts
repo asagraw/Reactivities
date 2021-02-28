@@ -1,4 +1,5 @@
 import { IActivity } from "./../models/activity";
+import { format } from "date-fns";
 import {
   action,
   computed,
@@ -25,9 +26,27 @@ class ActivityStore {
   @observable target = "";
 
   @computed get activitiesByDate() {
-    return Array.from(this.activityRegistry.values())
-      .slice()
-      .sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+    // return Array.from(this.activityRegistry.values())
+    //   .slice()
+    //   .sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+    return this.groupActivitiesByDate(
+      Array.from(this.activityRegistry.values())
+    );
+  }
+
+  groupActivitiesByDate(activities: IActivity[]) {
+    const sortedActivities = activities.sort(
+      (a, b) => a.date!.getTime() - b.date!.getTime()
+    );
+    return Object.entries(
+      sortedActivities.reduce((activities, activity) => {
+        const date = format(activity.date!, "dd MMM yyyy h:mm aa");
+        activities[date] = activities[date]
+          ? [...activities[date], activity]
+          : [activity];
+        return activities;
+      }, {} as { [key: string]: IActivity[] })
+    );
   }
 
   @action loadActivities = async () => {
@@ -35,10 +54,14 @@ class ActivityStore {
     try {
       const activities = await agent.Activities.list();
       activities.forEach((activity) => {
-        activity.date = activity.date.split(".")[0];
+        // activity.date = activity.date.split(".")[0];
+        activity.date = new Date(activity.date!);
         this.activityRegistry.set(activity.id, activity);
       });
       this.loading = false;
+      console.log(
+        this.groupActivitiesByDate(Array.from(this.activityRegistry.values()))
+      );
     } catch (error) {
       console.log(error);
       this.loading = false;
@@ -50,19 +73,20 @@ class ActivityStore {
     if (activity) {
       this.selectedActivity = activity;
     } else {
-      this.loading = true;
+      // runInAction(() => {
+      //   this.loading = true;
+      // });
       try {
         activity = await agent.Activities.details(id);
         runInAction(() => {
           this.selectedActivity = activity;
-          this.loading = false;
+          // this.loading = false;
         });
       } catch (error) {
         runInAction(() => {
-          this.loading = false;
+          // this.loading = false;
         });
-
-        console.log(error);
+        // this.loading = false;
       }
     }
   };

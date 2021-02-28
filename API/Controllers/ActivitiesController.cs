@@ -5,7 +5,6 @@ using Application.Activities;
 using Domain;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-
 namespace API.Controllers
 {
     [Route("api/[controller]")]
