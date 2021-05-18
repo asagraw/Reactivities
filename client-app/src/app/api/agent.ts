@@ -1,9 +1,22 @@
+import { UserFormValues } from "./../models/user";
 import { toast } from "react-toastify";
 import { IActivity } from "./../models/activity";
 import axios, { AxiosResponse } from "axios";
 import { history } from "../..";
+import { User } from "../models/user";
+import { request } from "http";
+import userStore from "../stores/userStore";
+import { useContext } from "react";
 
 axios.defaults.baseURL = "http://localhost:5000/api";
+
+axios.interceptors.request.use((config) => {
+  if (window.localStorage.getItem("jwt"))
+    config.headers.Authorization = `Bearer ${window.localStorage.getItem(
+      "jwt"
+    )}`;
+  return config;
+});
 axios.interceptors.response.use(undefined, (error) => {
   if (!error.response) {
     toast.error("Network error- Make sure API is running!");
@@ -18,12 +31,23 @@ axios.interceptors.response.use(undefined, (error) => {
     config.method === "get"
   ) {
     history.push("/notfound");
+  } else if (status == 400 && data.errors) {
+    const modalStateErrors = [];
+    for (const key in data.errors) {
+      if (data.errors[key]) {
+        modalStateErrors.push(data.errors[key]);
+      }
+    }
+    throw modalStateErrors.flat();
   } else if (status === 500) {
     toast.error("Server Error: Check the terminal for more info!");
   }
 });
 
-const responseBody = (response: AxiosResponse) => response.data;
+const responseBody = (response: AxiosResponse) => {
+  console.log(response);
+  return response.data;
+};
 
 const sleep = (ms: number) => (response: AxiosResponse) =>
   new Promise<AxiosResponse>((resolve) =>
@@ -50,6 +74,15 @@ const Activities = {
     requests.del(`/activities/${id}`, { data: activity }),
 };
 
+const Account = {
+  current: (): Promise<User> => requests.get("/account"),
+  login: (user: UserFormValues): Promise<User> =>
+    requests.post("/account/login", user),
+  register: (user: UserFormValues): Promise<User> =>
+    requests.post("/account/register", user),
+};
+
 export default {
   Activities,
+  Account,
 };

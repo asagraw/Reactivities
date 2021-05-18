@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using API.Middleware;
 using API.Services;
 using Application.Activities;
+using Application.Interface;
 using Domain;
 using FluentValidation.AspNetCore;
+using Infrastructure.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +27,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Persistence;
+using AutoMapper;
+using Application.Core;
 
 namespace API
 {
@@ -49,6 +53,7 @@ namespace API
                 });
             });
             services.AddMediatR(typeof(List.Handler).Assembly);
+            services.AddAutoMapper(typeof(MappingProfiles).Assembly);
             services.AddControllers(opt =>
             {
                 var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
@@ -74,7 +79,18 @@ namespace API
 
                     };
                 });
+
+            services.AddAuthorization(opt => 
+            {
+                opt.AddPolicy("IsActivityHost", policy => 
+                {
+                    policy.Requirements.Add(new IsHostRequirement());
+                });
+            });
             services.AddScoped<TokenService>();
+            services.AddScoped<IUserAccessor, UserAccessor>();
+
+            services.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
 
         }
 
